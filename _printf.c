@@ -1,63 +1,55 @@
-#include "main.h"
-
-void flush_buffer(char buffer[], int *buff_ind);
+#include <stdarg.h>
+#include <unistd.h>
 
 /**
- * _printf - Printf function
- * @format: format.
- * Return: Number of printed characters.
+ * _printf - Custom printf function.
+ * @format: Format string.
+ * Return: Number of characters printed.
  */
 int _printf(const char *format, ...)
 {
-	int i, printed_chars = 0;
-	int flags, width, precision, size, buff_ind = 0;
-	va_list list;
-	char buffer[BUFF_SIZE];
+    va_list args;
+    int count = 0;
 
-	if (format == NULL)
-		return (-1);
+    va_start(args, format);
 
-	va_start(list, format);
+    while (*format)
+    {
+        if (*format == '%' && *(format + 1) != '\0')
+        {
+            format++; // Move past '%'
+            switch (*format)
+            {
+                case 'c':
+                    count += write(1, &va_arg(args, int), 1);
+                    break;
+                case 's':
+                    count += write(1, va_arg(args, char *), 1);
+                    break;
+                case '%':
+                    count += write(1, "%", 1);
+                    break;
+                default:
+                    count += write(1, "%", 1);
+                    count += write(1, format, 1);
+            }
+        }
+        else
+        {
+            count += write(1, format, 1);
+        }
 
-	for (i = 0; format && format[i] != '\0'; i++)
-	{
-		if (format[i] != '%')
-		{
-			buffer[buff_ind++] = format[i];
-			if (buff_ind == BUFF_SIZE)
-				flush_buffer(buffer, &buff_ind);
-			printed_chars++;
-		}
-		else
-		{
-			flush_buffer(buffer, &buff_ind);
-			flags = get_flags(format, &i);
-			width = get_width(format, &i, list);
-			precision = get_precision(format, &i, list);
-			size = get_size(format, &i);
-			++i;
-			printed_chars += handle_print(format, &i, list, buffer,
-				flags, width, precision, size);
-		}
-	}
+        format++;
+    }
 
-	flush_buffer(buffer, &buff_ind);
-	va_end(list);
+    va_end(args);
 
-	return (printed_chars);
+    return count;
 }
 
-/**
- * flush_buffer - Prints the contents of the buffer if it exists
- * @buffer: Array of chars
- * @buff_ind: Index at which to add the next char, represents the length.
- */
-void flush_buffer(char buffer[], int *buff_ind)
+int main(void)
 {
-	if (*buff_ind > 0)
-	{
-		write(1, buffer, *buff_ind);
-		*buff_ind = 0;
-	}
+    _printf("I'm not going anywhere. You can print that wherever you want to. I'm here and I'm a Spur for life\n");
+    return (0);
 }
 
